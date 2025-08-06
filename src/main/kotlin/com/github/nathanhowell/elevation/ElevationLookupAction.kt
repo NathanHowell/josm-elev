@@ -1,8 +1,10 @@
 package com.github.nathanhowell.elevation
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.fasterxml.jackson.databind.node.DoubleNode
+import com.fasterxml.jackson.databind.node.TextNode
 import org.openstreetmap.josm.actions.JosmAction
 import org.openstreetmap.josm.command.ChangePropertyCommand
 import org.openstreetmap.josm.command.Command
@@ -11,32 +13,24 @@ import org.openstreetmap.josm.data.UndoRedoHandler
 import org.openstreetmap.josm.data.coor.LatLon
 import org.openstreetmap.josm.data.osm.Node
 import org.openstreetmap.josm.gui.MainApplication
+import org.openstreetmap.josm.tools.HttpClient
 import org.openstreetmap.josm.tools.Logging
 import java.awt.event.ActionEvent
 import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-import java.time.Duration
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 import kotlin.concurrent.thread
 
 class ElevationLookupAction : JosmAction(
     "Elevation Lookup",
-    "elevation",
+    null,
     "Add elevation data to selected nodes",
     null,
+    true,
     true
 ) {
     companion object {
-        private val client: Lazy<HttpClient> = lazy {
-            HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(10))
-                .build()
-        }
-
-        private val objectMapper = ObjectMapper().registerKotlinModule()
+        private val objectMapper = ObjectMapper()
     }
 
     override fun actionPerformed(e: ActionEvent) {
@@ -103,28 +97,31 @@ class ElevationLookupAction : JosmAction(
         val url = "https://epqs.nationalmap.gov/v1/json?" +
                 "x=${latLon.lon()}&y=${latLon.lat()}&units=Meters&wkid=4326&includeDate=True"
 
-        val request = HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .header("User-Agent", "JOSM Elevation Plugin")
-            .timeout(Duration.ofSeconds(10))
-            .GET()
-            .build()
+        val response = HttpClient.create(URI.create(url).toURL())
+            .connect()
 
-        val response = client.value.send(request, HttpResponse.BodyHandlers.ofString())
-        val result = objectMapper.readTree(response.body())
+        if (response.responseCode != 200) {
+            Logging.error("Failed to fetch elevation data: HTTP ${response.responseCode} - ${response.content}")
+            throw IllegalStateException("Failed to fetch elevation data: HTTP ${response.responseCode}")
+        }
 
-        val elevationResults = result.get("USGS_Elevation_Point_Query_Service")?.get("Elevation_Query")
-        assert(elevationResults != null)
-        assert(elevationResults?.size() == 1)
+        val result = objectMapper.readTree(response.content)
+
+        val elevationResults = result.get("value")
+        if (elevationResults == null || elevationResults.isNull) {
+            Logging.error("No elevation data found for coordinates: ${latLon.lat()}, ${latLon.lon()}")
+            throw IllegalStateException("No elevation data found for coordinates: ${latLon.lat()}, ${latLon.lon()}")
+        }
+
         when (elevationResults) {
-            is ArrayNode if elevationResults.size() == 1 -> {
-                // Valid response with one elevation result
+            is TextNode -> {
+                // Handle case where elevation is a single text node
                 Logging.info("Elevation lookup successful for coordinates: ${latLon.lat()}, ${latLon.lon()}")
-                return elevationResults.get(0).get("Elevation")?.asDouble()!!
+                return elevationResults.asDouble()
             }
             else -> {
                 Logging.error("Unexpected response format: $elevationResults")
-                throw IllegalArgumentException("Unexpected response format: $elevationResults")
+                throw IllegalStateException("Unexpected response format: $elevationResults")
             }
         }
     }
