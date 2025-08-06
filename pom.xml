@@ -96,9 +96,9 @@
                             <Plugin-Class>com.github.nathanhowell.elevation.ElevationPlugin</Plugin-Class>
                             <Plugin-Description>Node elevation lookup via the EPQS service</Plugin-Description>
                             <Plugin-Version>1</Plugin-Version>
-<!--                            <Plugin-Requires>jackson</Plugin-Requires>-->
                             <Plugin-Mainversion>${josm.version}</Plugin-Mainversion>
                             <Plugin-Canloadatruntime>true</Plugin-Canloadatruntime>
+                            <Plugin-Icon>images/elevation.png</Plugin-Icon>
                         </manifestEntries>
                     </archive>
                 </configuration>

@@ -1,9 +1,6 @@
 package com.github.nathanhowell.elevation
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.DoubleNode
 import com.fasterxml.jackson.databind.node.TextNode
 import org.openstreetmap.josm.actions.JosmAction
 import org.openstreetmap.josm.command.ChangePropertyCommand
@@ -23,7 +20,7 @@ import kotlin.concurrent.thread
 
 class ElevationLookupAction : JosmAction(
     "Elevation Lookup",
-    null,
+    "elevation",
     "Add elevation data to selected nodes",
     null,
     true,
@@ -73,7 +70,7 @@ class ElevationLookupAction : JosmAction(
                 val command = ChangePropertyCommand(
                     listOf(node),
                     "ele",
-                    elevation.toString()
+                    "%.1f".format(elevation)
                 )
                 commands.add(command)
             } catch (e: Exception) {
