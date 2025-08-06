@@ -98,7 +98,7 @@
                 <configuration>
                     <archive>
                         <manifestEntries>
-                            <Plugin-Class>org.example.ElevationPlugin</Plugin-Class>
+                            <Plugin-Class>com.github.nathanhowell.elevation.ElevationPlugin</Plugin-Class>
                             <Plugin-Description>JOSM plugin for elevation lookup using EPQS web service</Plugin-Description>
                             <Plugin-Version>${project.version}</Plugin-Version>
                             <Plugin-Mainversion>${josm.version}</Plugin-Mainversion>

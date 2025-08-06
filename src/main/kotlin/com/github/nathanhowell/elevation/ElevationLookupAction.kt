@@ -1,21 +1,17 @@
-package org.example
+package com.github.nathanhowell.elevation
 
-import com.fasterxml.jackson.databind.JsonNode
-import org.openstreetmap.josm.plugins.Plugin
-import org.openstreetmap.josm.plugins.PluginInformation
-import org.openstreetmap.josm.gui.MainApplication
-import org.openstreetmap.josm.gui.MainMenu
-import org.openstreetmap.josm.actions.JosmAction
-import org.openstreetmap.josm.data.coor.LatLon
-import org.openstreetmap.josm.data.osm.Node
-import org.openstreetmap.josm.command.Command
-import org.openstreetmap.josm.command.ChangePropertyCommand
-import org.openstreetmap.josm.command.SequenceCommand
-import org.openstreetmap.josm.tools.Logging
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import org.openstreetmap.josm.actions.JosmAction
+import org.openstreetmap.josm.command.ChangePropertyCommand
+import org.openstreetmap.josm.command.Command
+import org.openstreetmap.josm.command.SequenceCommand
 import org.openstreetmap.josm.data.UndoRedoHandler
+import org.openstreetmap.josm.data.coor.LatLon
+import org.openstreetmap.josm.data.osm.Node
+import org.openstreetmap.josm.gui.MainApplication
+import org.openstreetmap.josm.tools.Logging
 import java.awt.event.ActionEvent
 import java.net.URI
 import java.net.http.HttpClient
@@ -25,12 +21,6 @@ import java.time.Duration
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 import kotlin.concurrent.thread
-
-class ElevationPlugin(info: PluginInformation) : Plugin(info) {
-    init {
-        MainMenu.add(MainApplication.getMenu().toolsMenu, ElevationLookupAction())
-    }
-}
 
 class ElevationLookupAction : JosmAction(
     "Elevation Lookup",
@@ -127,15 +117,15 @@ class ElevationLookupAction : JosmAction(
         assert(elevationResults != null)
         assert(elevationResults?.size() == 1)
         when (elevationResults) {
-           is ArrayNode if elevationResults.size() == 1 -> {
+            is ArrayNode if elevationResults.size() == 1 -> {
                 // Valid response with one elevation result
                 Logging.info("Elevation lookup successful for coordinates: ${latLon.lat()}, ${latLon.lon()}")
-               return elevationResults.get(0).get("Elevation")?.asDouble()!!
-           }
-           else -> {
+                return elevationResults.get(0).get("Elevation")?.asDouble()!!
+            }
+            else -> {
                 Logging.error("Unexpected response format: $elevationResults")
-               throw IllegalArgumentException("Unexpected response format: $elevationResults")
-        }
+                throw IllegalArgumentException("Unexpected response format: $elevationResults")
+            }
         }
     }
 }
